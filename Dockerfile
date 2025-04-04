@@ -1,34 +1,38 @@
-FROM node:lts-alpine3.18 AS base
-WORKDIR /usr/src/wpp-server
-ENV NODE_ENV=production PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
-COPY package.json ./
-RUN apk update && \
-    apk add --no-cache \
-    vips-dev \
-    fftw-dev \
-    gcc \
-    g++ \
-    make \
-    libc6-compat \
-    && rm -rf /var/cache/apk/*
-RUN npm install --production --pure-lockfile --force && \
-    npm add sharp --ignore-engines && \
-    npm cache clean
+FROM node:18-slim
 
-FROM base AS build
-WORKDIR /usr/src/wpp-server
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
-COPY package.json  ./
-RUN npm install --production=false --pure-lockfile --force
-RUN npm cache clean
-COPY . .
-RUN npm build
+# Chrome dependencies
+RUN apt-get update && apt-get install -y \
+  wget \
+  ca-certificates \
+  fonts-liberation \
+  libappindicator3-1 \
+  libasound2 \
+  libatk-bridge2.0-0 \
+  libatk1.0-0 \
+  libcups2 \
+  libdbus-1-3 \
+  libxcomposite1 \
+  libxdamage1 \
+  libxrandr2 \
+  xdg-utils \
+  libgbm1 \
+  libnss3 \
+  libxshmfence1 \
+  libx11-xcb1 \
+  --no-install-recommends && \
+  apt-get clean && rm -rf /var/lib/apt/lists/*
 
-FROM base
-WORKDIR /usr/src/wpp-server/
-RUN apk add --no-cache chromium
-RUN npm cache clean
+# Cria diretório da app
+WORKDIR /app
+
+# Copia e instala pacotes
+COPY package*.json ./
+RUN npm install
+
+# Copia restante
 COPY . .
-COPY --from=build /usr/src/wpp-server/ /usr/src/wpp-server/
+
+# Porta padrão do wppconnect (se usar server)
 EXPOSE 21465
-ENTRYPOINT ["node", "dist/server.js"]
+
+CMD [ "node", "index.js" ]

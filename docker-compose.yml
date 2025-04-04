@@ -1,16 +1,14 @@
-version: "3"
+version: '3.8'
 
 services:
-  wppconnect:
-    container_name: wpp-server
-    restart: unless-stopped
-    build:
-      context: .
+  wppbot:
+    build: .
+    container_name: wppconnect-bot
     volumes:
-      - ./config.ts:/usr/src/wpp-server/config.ts
-      - ./wppconnect_tokens:/usr/src/wpp-server/tokens
+      - .:/app
+      - ./tokens:/app/tokens
+    environment:
+      - TZ=America/Sao_Paulo
     ports:
       - "21465:21465"
-
-volumes:
-  wppconnect_tokens: {}      
+    restart: always
