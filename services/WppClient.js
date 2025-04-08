@@ -1,25 +1,71 @@
-const { create } = require('@wppconnect-team/wppconnect');
+const wppconnect = require('@wppconnect-team/wppconnect');
+const { getQrCode, saveQrCode } = require('../repository/Bot');
 
-let clientInstance = null;
+const clients = new Map(); // chave: sessionName | valor: { client, qrCode }
 
-const initializeClient = async () => {
-    if (!clientInstance) {
-        clientInstance = await create({
-            puppeteerOptions: {
-                executablePath: '/home/marco/.cache/puppeteer/chrome/linux-131.0.6778.204/chrome-linux64/chrome', // ou caminho do Chrome no WSL, se estiver instalado
-                args: ['--no-sandbox', '--disable-setuid-sandbox'],
-              }
-        });
-
-        console.log("Cliente WPPConnect inicializado!");
-
-        clientInstance.onMessage(async (message) => {
-            console.log("Nova mensagem recebida:", message);
-            const handleSurveyBot = require("../controllers/handleSurveyBot");
-            await handleSurveyBot(message);
-        });
+const initializeClient = async (sessionName = 'default', idEmpresa = 1) => {
+    const existing = clients.get(sessionName);
+    if (existing && existing.client) {
+      console.log(`⚠️ Sessão ${sessionName} já ativa.`);
+      const qrCodeFromDb = await getQrCode(sessionName, idEmpresa);
+      return { qrCode: qrCodeFromDb, alreadyConnected: true };
     }
-    return clientInstance;
+  
+    let resolveQrCode;
+    const qrCodePromise = new Promise((resolve) => {
+      resolveQrCode = resolve;
+    });
+  
+    const client = await wppconnect.create({
+      session: sessionName,
+      catchQR: async (base64Qrimg) => {
+        await saveQrCode(sessionName, idEmpresa, base64Qrimg);
+        resolveQrCode(base64Qrimg);
+      },
+      statusFind: (statusSession, session) => {
+        console.log(`📶 Sessão ${session} - status: ${statusSession}`);
+      },
+      headless: true,
+      useChrome: true,
+      browserArgs: ['--no-sandbox', '--disable-setuid-sandbox'],
+      tokenStore: 'file',
+      folderNameToken: './tokens',
+    });
+  
+    client.onMessage(async (message) => {
+      const handleSurveyBot = require("../controllers/handleSurveyBot");
+      await handleSurveyBot(message);
+    });
+  
+    clients.set(sessionName, { client });
+  
+    // const qrCode = await qrCodePromise;
+    // return { qrCode, alreadyConnected: false };
+  };
+
+const stopClient = async (sessionName = 'default') => {
+  const session = clients.get(sessionName);
+  if (session && session.client) {
+    await session.client.close();
+    clients.delete(sessionName);
+    console.log(`🛑 Sessão ${sessionName} finalizada.`);
+  } else {
+    console.log(`⚠️ Sessão ${sessionName} não está ativa.`);
+  }
 };
 
-module.exports = { initializeClient };
+const getClient = (sessionName = 'default') => {
+    console.log(clients.get(sessionName)?.client || null);
+  return clients.get(sessionName)?.client || null;
+};
+
+const isClientActive = (sessionName = 'default') => {
+  return clients.has(sessionName);
+};
+
+module.exports = {
+  initializeClient,
+  stopClient,
+  getClient,
+  isClientActive,
+};

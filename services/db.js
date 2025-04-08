@@ -5,8 +5,6 @@ const pool = mysql.createPool({
     user: process.env.DB_USER || 'root',
     password: process.env.DB_PWD || 'root',
     database: process.env.DB_NAME || 'bot_pesq',
-    // debug: process.env.DEBUG === '1',
-
 });
 
 const secondaryDB = mysql.createPool({

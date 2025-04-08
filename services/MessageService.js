@@ -1,6 +1,6 @@
 const fs = require("fs");
 const path = require("path");
-const { initializeClient } = require("./WppClient");
+const { getClient } = require("./WppClient");
 const WebSocketService = require("./WebSocketService");
 const { getMessagesWithStatus0, updateMessageStatus } = require('../repository/messageRepository');
 const { getBotByPhoneWithOutCompany } = require("../repository/Bot");
@@ -32,10 +32,15 @@ async function saveFile(message) {
 
 const checkAndProcessMessages = async () => {
     try {
+        const client = getClient();
+
+        if (!client) {
+            console.warn("⚠️ Cliente ainda não inicializado. Ignorando envio de mensagens.");
+            return;
+        }
+
         const messages = await getMessagesWithStatus0();
         if (messages.length === 0) return;
-
-        const client = await initializeClient();
 
         for (const message of messages) {
             try {
@@ -48,7 +53,7 @@ const checkAndProcessMessages = async () => {
                 }
 
                 let response;
-                
+
                 if (["audio", "video", "document", "image"].includes(message.messageType)) {
                     if (!message.fileContent || !message.fileMimetype) {
                         console.error("❌ Arquivo sem conteúdo ou MIME type inválido.");
@@ -85,8 +90,7 @@ const checkAndProcessMessages = async () => {
                             }
                         ]
                     });
-                }
-                else {
+                } else {
                     response = await client.sendText(message.receiverNumber, message.message);
                 }
 

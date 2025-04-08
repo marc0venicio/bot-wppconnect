@@ -1,5 +1,36 @@
 const {pool, secondaryDB} = require("../services/db");
 
+const saveQrCode = async (sessionName, client_id, base64) => {
+    try {
+      const sql = `
+        UPDATE bots
+        SET qrCode = ?, created_at = NOW()
+        WHERE session_name = ? AND client_id = ?
+      `;
+      const [result] = await secondaryDB.query(sql, [base64, sessionName, client_id]);
+      return result.affectedRows > 0;
+    } catch (error) {
+      console.error("Erro ao salvar QRCode no banco:", error);
+      return false;
+    }
+  };
+  
+  const getQrCode = async (sessionName, client_id) => {
+    try {
+      const sql = `
+        SELECT qrCode
+        FROM bots
+        WHERE session_name = ? AND client_id = ?
+        LIMIT 1
+      `;
+      const [rows] = await secondaryDB.query(sql, [sessionName, client_id]);
+      return rows.length > 0 ? rows[0].qrCode : null;
+    } catch (error) {
+      console.error("Erro ao buscar QRCode no banco:", error);
+      return null;
+    }
+  };
+
 const getBotByName = async (name, idComp) => {
     try {
         const sql = `SELECT *
@@ -181,5 +212,7 @@ module.exports = {
     getTotalBotCount,
     getBotById,
     updateBot,
-    getBotByPhoneRaw
+    getBotByPhoneRaw,
+    saveQrCode,
+    getQrCode,
 }

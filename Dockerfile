@@ -28,11 +28,11 @@ WORKDIR /app
 # Copia e instala pacotes
 COPY package*.json ./
 RUN npm install
-
+RUN npm install -g nodemon
 # Copia restante
 COPY . .
 
 # Porta padrão do wppconnect (se usar server)
-EXPOSE 21465
+EXPOSE 5555
 
-CMD [ "node", "index.js" ]
+CMD ["npx", "nodemon", "--legacy-watch", "app.js"]

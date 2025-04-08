@@ -26,13 +26,14 @@ setInterval(async () => {
   await MessageService.checkAndProcessMessages();
 }, 5000);
 
-(async () => {
-  try {
-      await initializeClient(); // Chama a função do bot
-  } catch (error) {
-      console.error('Erro ao inicializar o SurveyBot:', error);
-  }
-})();
+// (async () => {
+//   try {
+//       await initializeClient(); 
+//       console.log("caraio")// Chama a função do bot
+//   } catch (error) {
+//       console.error('Erro ao inicializar o SurveyBot:', error);
+//   }
+// })();
 
 app.listen(port, () => {
     console.log(`Servidor PAINEL rodando em http://localhost:${port}`);
