@@ -3,6 +3,8 @@ version: '3.8'
 services:
   wppbot:
     build: .
+    networks:
+      - raw_laravel
     container_name: wppconnect-bot
     volumes:
       - .:/app
@@ -12,3 +14,7 @@ services:
     ports:
       - "5555:5555"
     restart: always
+    
+networks:
+  raw_laravel:
+    external: true

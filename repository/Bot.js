@@ -8,6 +8,7 @@ const saveQrCode = async (sessionName, client_id, base64) => {
         WHERE session_name = ? AND client_id = ?
       `;
       const [result] = await secondaryDB.query(sql, [base64, sessionName, client_id]);
+      console.log(result.affectedRows)
       return result.affectedRows > 0;
     } catch (error) {
       console.error("Erro ao salvar QRCode no banco:", error);
@@ -23,6 +24,7 @@ const saveQrCode = async (sessionName, client_id, base64) => {
         WHERE session_name = ? AND client_id = ?
         LIMIT 1
       `;
+      console.log("qrCode", sessionName, client_id)
       const [rows] = await secondaryDB.query(sql, [sessionName, client_id]);
       return rows.length > 0 ? rows[0].qrCode : null;
     } catch (error) {
@@ -30,6 +32,18 @@ const saveQrCode = async (sessionName, client_id, base64) => {
       return null;
     }
   };
+
+  const getAllActive = async () => {
+    try {
+        const sql = `SELECT * FROM bots b WHERE b.status = ?`;
+        const [rows] = await secondaryDB.query(sql, [2]);
+        return rows;
+    }
+    catch (error) {
+        console.error(error);
+        return false;
+    }
+  }
 
 const getBotByName = async (name, idComp) => {
     try {
@@ -103,8 +117,8 @@ const getBotByPhoneWithOutCompany = async (phone) => {
     try {
         const sql = `SELECT *
         FROM bots b
-        WHERE b.celular = ?`;
-        const [rows, _] = await pool.query(sql, [phone]);
+        WHERE b.number = ?`;
+        const [rows, _] = await secondaryDB.query(sql, [phone]);
         return rows;
     } catch (error) {
         console.error(error);
@@ -170,6 +184,17 @@ const insertBot = async ({ idComp, name, token, phone, status, idServ = 1 }) => 
     }
 }
 
+const updateBotStatus = async (sessionName, status) => {
+    try {
+        const sql = `UPDATE bots SET status = ? WHERE session_name = ?`;
+        const [result] = await secondaryDB.query(sql, [status, sessionName]);
+        return result;
+    } catch (error) {
+        console.error(error);
+        return false;
+    }
+}
+
 const delBot = async (botId) => {
     try {
         const sql = `DELETE FROM bots WHERE id = ?`;
@@ -215,4 +240,6 @@ module.exports = {
     getBotByPhoneRaw,
     saveQrCode,
     getQrCode,
+    getAllActive,
+    updateBotStatus
 }

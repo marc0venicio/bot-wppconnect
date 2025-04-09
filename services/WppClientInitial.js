@@ -13,7 +13,7 @@ const removeLockFile = (sessionName) => {
 
 const clients = new Map();
 
-const createSession = async (sessionName, idEmpresa) => {
+const createSessionInitial = async (sessionName, idEmpresa) => {
   if (sessionName) {
     if (clients.has(sessionName)) {
       console.log(`⚠️ Sessão ${sessionName} já está ativa.`);
@@ -36,17 +36,13 @@ const createSession = async (sessionName, idEmpresa) => {
         console.log(`📶 Sessão ${session} - Status: ${status}`);
         if(status == 'qrReadSuccess'){
           await updateBotStatus(session, 2);
-          client.onMessage(async (message) => {
-            const handleSurveyBot = require("../controllers/handleSurveyBot");
-            await handleSurveyBot(message);
-          });
         }
       },
       headless: true,
       useChrome: true,
       browserArgs: ['--no-sandbox', '--disable-setuid-sandbox'],
       tokenStore: 'file',
-      folderNameToken: `./tokens`,
+      folderNameToken: './tokens',
       browserSessionToken: sessionName,
     });
 
@@ -63,11 +59,11 @@ const createSession = async (sessionName, idEmpresa) => {
 
 };
 
-const startAllActiveSessions = async () => {
+const startAllActiveSessionsInitial = async () => {
   const bots = await getAllActive();
   for (const bot of bots) {
     const { session_name, id_empresa } = bot;
-    await createSession(session_name, id_empresa);
+    await createSessionInitial(session_name, id_empresa);
     console.log(`✅ Sessão iniciada automaticamente: ${session_name}`);
   }
 };
@@ -90,8 +86,8 @@ const listActiveSessions = () => {
 };
 
 module.exports = {
-  createSession,
-  startAllActiveSessions,
+  createSessionInitial,
+  startAllActiveSessionsInitial,
   stopSession,
   getClient,
   listActiveSessions,

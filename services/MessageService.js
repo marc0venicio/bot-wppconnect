@@ -32,23 +32,27 @@ async function saveFile(message) {
 
 const checkAndProcessMessages = async () => {
     try {
-        const client = getClient();
-
-        if (!client) {
-            console.warn("⚠️ Cliente ainda não inicializado. Ignorando envio de mensagens.");
-            return;
-        }
-
+        
         const messages = await getMessagesWithStatus0();
+
         if (messages.length === 0) return;
 
         for (const message of messages) {
             try {
                 const phoneBot = message.senderNumber.replace("@c.us", "");
                 const botData = await getBotByPhoneWithOutCompany(phoneBot);
-
+                
                 if (!botData || botData.length === 0) {
                     console.error(`❌ Nenhum bot encontrado para o número ${phoneBot}`);
+                    continue;
+                }
+
+                const sessionName = botData[0].session_name;
+        
+                const client = getClient(sessionName);
+
+                if (!client) {
+                    console.warn("⚠️ Cliente ainda não inicializado. Ignorando envio de mensagens.");
                     continue;
                 }
 

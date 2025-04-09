@@ -2,8 +2,8 @@ const { secondaryDB } = require("../services/db");
 
 const getMessagesWithStatus0 = async () => {
     try {
-        const sql = `SELECT * FROM messages WHERE status = 0 AND senderNumber = ? limit 2`;
-        const [rows, _] = await secondaryDB.query(sql, ['559281470694']);
+        const sql = `SELECT * FROM messages WHERE status = 0 limit 2`;
+        const [rows, _] = await secondaryDB.query(sql);
         return rows;
     } catch (error) {
         console.error('Erro ao buscar mensagens com status 0:', error);
